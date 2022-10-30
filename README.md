@@ -14,4 +14,4 @@ Thanks for using the application. 🙂
 Krish Agrawal<br/>
 Developer<br/>
 WordCloud Generator<br/>
-[krrishkhedia2006@gmail.com](mailto:krrishkhedia2006@gmail.com)
+Support: [krrishkhedia2006@gmail.com](mailto:krrishkhedia2006@gmail.com)
