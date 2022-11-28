@@ -18,11 +18,13 @@ print("""
   ░╚═════╝░╚══════╝╚═╝░░╚══╝╚══════╝╚═╝░░╚═╝╚═╝░░╚═╝░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝
 """)
 
+#Check if it is the first time usage of the application
 if exists('config'):
-    pass
+  pass
 else:
-    print("Looks like the application has never runed on this system. \nPlease connect to the database ti run the application.")
-    db_init()
+  #If it is first time, then redirect to the database initialization
+  print("Looks like the application has never runed on this system. \nPlease connect to the database to run the application.")
+  db_init()
 
 
 main_menu()

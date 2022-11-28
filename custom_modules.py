@@ -1,3 +1,4 @@
+#Import all required modules
 import mysql.connector as sql
 import pickle
 from email_validator import validate_email, EmailNotValidError
@@ -11,17 +12,22 @@ from PIL import Image, ImageTk
 from datetime import datetime
 from prettytable import PrettyTable
 
+#Initialize Database
 def db_init():
+    #Get database credentials freom user
     print("\n\nEnter The Database Details Below:")
     host = input("Hostname: ")
     user = input("Username: ")
     pwd = input("Password: ")
     db = input("Database Name: ")
     try:
+        #Connnect to the given credentials
         conn = sql.connect(host = host, user = user, password = pwd, database = db)
         cur = conn.cursor()
+        #Create table for users
         e = "CREATE TABLE USERS(UID INT(4) PRIMARY KEY, FIRST_NAME VARCHAR(15), LAST_NAME VARCHAR(15), EMAIL VARCHAR(40) NOT NULL UNIQUE, PASSWORD VARCHAR(30) NOT NULL, JOINED_AT DATETIME NOT NULL)"
         cur.execute(e)
+        #Create table for storing wordclouds
         e = "CREATE TABLE WORDCLOUDS(WCID INT(4) PRIMARY KEY, WC_NAME VARCHAR(50) NOT NULL, WC_PATH VARCHAR(100) NOT NULL, WIDTH INT(4) NOT NULL, HEIGHT INT(4) NOT NULL, CREATION_TIME DATETIME NOT NULL, UID INT(4), FOREIGN KEY (UID) REFERENCES USERS(UID))"
         cur.execute(e)
         mkdir("output")
@@ -31,19 +37,23 @@ def db_init():
         db_init()
     else:
         print("\nDatabase Successfully Connected & Tables Created Successfully!")
+        #Save the given credentials
         with open("config","wb") as file:
             db_config = {'hostname':host,'username':user,'password':pwd,'database':db}
             pickle.dump(db_config,file)
     finally:
+        #Close database connection
         if conn.is_connected():
             cur.close()
             conn.close()
 
+#Get the saved database credentials
 def get_db_config():
     with open('config','rb') as file:
         db_config = pickle.load(file)
     return db_config
 
+#Display the main menu
 def main_menu():
     print("\n\nMain Menu:\n  1. Login\n  2. Signup\n  3. Exit")
     choice = int(input("Enter Your Choice(1,2,3): "))
@@ -57,6 +67,7 @@ def main_menu():
         print("\nYou entered a wrong number, please enter it correctly.")
         main_menu()
 
+#Verify User Email
 def verify_email(email):
     try:
         v = validate_email(email)
@@ -67,6 +78,7 @@ def verify_email(email):
         print("Please Try Again!")
         return False
 
+#Validate Password
 def validate_password(password):
     SpecialSym =['!','@','#','$','%','^','&','*','(',')','_','-','=','+','.',',','/','?','<','>',';',':','\'','"','[',']','\\','{','}','|','`','~']
     val = True
@@ -97,6 +109,7 @@ def validate_password(password):
     
     return val
 
+#Function for Login
 def login():
     global user_id
     print("\nEnter your login details:")
@@ -136,6 +149,7 @@ def login():
     else:
         login()
 
+#Function for SignUp
 def signup():
     print("\nEnter the details of the user below:")
     fname = input("  First Name: ")
@@ -162,6 +176,7 @@ def signup():
                             id = 1
                         else:
                             id = result[0]+1
+                        #Creating a new user
                         e = "INSERT INTO USERS (UID,FIRST_NAME,LAST_NAME,EMAIL,PASSWORD,JOINED_AT) VALUES ("+str(id)+",'"+fname+"','"+lname+"','"+email+"','"+upassword+"',NOW())"
                         cur.execute(e)
                         conn.commit()
@@ -187,6 +202,7 @@ def signup():
     else:
         signup()
 
+#Funtion to display the submenu
 def sub_menu():
     print("\n\nWhat Do You Want To Do?\n  1. Create a new wordcloud\n  2. View previously created wordcloud\n  3. Export previously created wordcloud\n  4. Delete a previously created wordcloud\n  5. Logout")
     choice = int(input("Enter Your Choice(1,2,3,4,5): "))
@@ -205,6 +221,7 @@ def sub_menu():
         print("\nYou entered a wrong number, please enter it correctly.")
         sub_menu()
 
+#Function to show the WordCloud image
 def show_image(width, height, file_path, wordcloud_name):
     img_root = Tk()
     if width>1200:
@@ -219,6 +236,7 @@ def show_image(width, height, file_path, wordcloud_name):
     img_label.place(relx=0.5,rely=0.5,anchor='center')
     img_root.mainloop()
 
+#Function to create the WordCloud
 def create_wordcloud():
     print("\nHow do you want to enter the text?\n  1. Pasting it here\n  2. From a text file (.txt)")
     choice = int(input("Enter Your Choice(1,2): "))
@@ -252,6 +270,7 @@ def create_wordcloud():
     show_image(width,height,wordcloud_path,file_name)
     
     choice = input("Do you want to export this wordcloud? ( YES | yes | Y | y     NO | no | N | n): ")
+    #Save WordCloud in disk
     if choice in ["YES", "yes", "Y", "y"]:
         path_to_save = input("Enter the folder path to export the generated wordcloud: ")
         path_to_save = path_to_save.replace("\"","").replace("\\","\\\\")
@@ -262,7 +281,7 @@ def create_wordcloud():
                 path_to_save = path_to_save+"/"
         copy2(wordcloud_path, path_to_save+file_name+'.png')
 
-    #Save wordcloud in database
+    #Save WordCloud in database
     try:
         db_config = get_db_config()
         conn = sql.connect(host = db_config['hostname'], user = db_config['username'], password = db_config['password'], database = db_config['database'])
@@ -288,6 +307,7 @@ def create_wordcloud():
     
     sub_menu()
 
+#Function to list the created wordcouds
 def list_wordclouds():
     try:
         db_config = get_db_config()
@@ -319,10 +339,12 @@ def list_wordclouds():
             conn.close()
     return total,result
 
+#Function to view the selected WordCloud
 def view_wordcloud():
     list = list_wordclouds()
     choice = int(input("\nEnter the S.No. of the wordcloud which you want to view: "))
     if choice<=list[0] and choice>0:
+        #Show the requested WordCloud
         show_image(list[1][choice-1][3],list[1][choice-1][4],list[1][choice-1][2],list[1][choice-1][1])
         print("\nWordCloud with S.No. "+str(choice)+" viewed successfully!")
     else:
@@ -330,9 +352,11 @@ def view_wordcloud():
         view_wordcloud()
     sub_menu()
 
+#Function to export the selected WordCloud
 def export_wordcloud():
     list = list_wordclouds()
     choice = int(input("\nEnter the S.No. of the wordcloud which you want to export: "))
+    #Export the requested WordCloud
     if choice<=list[0] and choice>0:
         path_to_save = input("\nEnter the folder path to export the generated wordcloud: ")
         path_to_save = path_to_save.replace("\"","").replace("\\","\\\\")
@@ -349,9 +373,11 @@ def export_wordcloud():
     
     sub_menu()
 
+#Function to delete the selected WordCloud
 def del_wordcloud():
     list = list_wordclouds()
     choice = int(input("\nEnter the S.No. of the wordcloud which you want to delete: "))
+    #Delete the requested WordCLoud
     if choice<=list[0] and choice>0:
         try:
             db_config = get_db_config()
